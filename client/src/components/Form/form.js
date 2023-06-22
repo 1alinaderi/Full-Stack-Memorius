@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useStyles from "./styles.js";
 import { TextField, Typography, Button, Paper } from "@material-ui/core";
 import FileBase from "react-file-base64";
 import { useDispatch } from "react-redux";
-import { createPosts } from "../../actions/posts.js";
+import { createPosts, updatePosts } from "../../actions/posts.js";
+import { useSelector } from "react-redux";
 
-const Form = () => {
+const Form = ({ setCurrentId, currentId }) => {
   const classes = useStyles();
   const dispatch = useDispatch();
+  const post = useSelector((state) =>
+    currentId ? state.posts.find((p) => p._id == currentId) : null
+  );
   const [postsData, setPostsData] = useState({
     creator: "",
     title: "",
@@ -15,11 +19,30 @@ const Form = () => {
     tags: "",
     selectedFile: "",
   });
+  useEffect(() => {
+    if (post) {
+      setPostsData(post);
+    }
+  }, [post]);
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(createPosts(postsData));
+    if (currentId) {
+      dispatch(updatePosts(currentId, postsData));
+    } else {
+      dispatch(createPosts(postsData));
+    }
+    clear();
   };
-  const clear = () => {};
+  const clear = () => {
+    setPostsData({
+      creator: "",
+      title: "",
+      message: "",
+      tags: "",
+      selectedFile: "",
+    });
+    setCurrentId(null);
+  };
   return (
     <Paper className={classes.paper}>
       <form
@@ -28,7 +51,9 @@ const Form = () => {
         className={`${classes.form} ${classes.root}`}
         onSubmit={handleSubmit}
       >
-        <Typography variant="h6">Creating a Memory</Typography>
+        <Typography variant="h6">
+          {currentId ? "Editing" : "Creating"} a Memory
+        </Typography>
         <TextField
           name="creator"
           variant="outlined"
@@ -95,7 +120,7 @@ const Form = () => {
           onClick={clear}
           fullWidth
         >
-          Submit
+          Clear
         </Button>
       </form>
     </Paper>
